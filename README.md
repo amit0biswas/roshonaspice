@@ -18,14 +18,14 @@ A responsive React/Vite storefront and a separate Express/Mongoose API for the R
    npm install
    ```
 
-4. Start the API and storefront:
+4. Start both the API and storefront from the repository root (not from `frontend/`):
 
    ```sh
    npm run dev
    ```
 
    The storefront is at `http://localhost:5173`; the API is at `http://localhost:4000`.
-   Both processes must stay running while using the storefront. If login reports an API/server error, open `http://localhost:5173/api/health`; the response should show `"status":"ok"` and `"database":"connected"`. Restart `npm run dev` from the project root if the API is unavailable.
+   Both processes must stay running while using the storefront. Starting only the frontend leaves its `/api` proxy without a backend and produces an API-unavailable message. On startup, the API also removes the obsolete unique `orders.reference` index from earlier schema versions; it does not delete order records. If login reports an API/server error, open `http://localhost:5173/api/health`; the response should show `"status":"ok"` and `"database":"connected"`. Restart `npm run dev` from the project root if the API is unavailable.
 5. Set up an administrator using one of these options:
 
    ```sh
@@ -105,7 +105,7 @@ There are no automated test files in the current repository. These production bu
 
 1. In Render, create a **Web Service** from the repository and use the repository root as its Root Directory so the npm workspace lockfile is available.
 2. Use the checked-in `render.yaml` Blueprint settings, or set:
-   - Build command: `npm ci && npm run build -w backend`
+   - Build command: `npm ci --include=dev && npm run build -w backend`
    - Start command: `npm run start -w backend`
    - Health check path: `/api/health`
 3. Add these service environment variables in Render. Never commit their values:

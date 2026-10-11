@@ -11,6 +11,7 @@ import nodemailer from "nodemailer";
 import { config } from "dotenv";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import "express-async-errors";
 import { z } from "zod";
 import { connectDatabase } from "./db.js";
 import { authenticate, requireAdmin, type AuthRequest, validate } from "./middleware.js";
@@ -662,6 +663,35 @@ if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) throw new Err
 if (!process.env.MONGODB_URI) throw new Error("Set MONGODB_URI before starting the API.");
 
 await connectDatabase(process.env.MONGODB_URI);
+const database = mongoose.connection.db;
+if (!database) throw new Error("MongoDB connected without an active database.");
+const orderCollectionExists = await database
+  .listCollections({ name: OrderModel.collection.collectionName }, { nameOnly: true })
+  .hasNext();
+if (orderCollectionExists) {
+  const orderIndexes = await OrderModel.collection.indexes();
+  const obsoleteReferenceIndex = orderIndexes.find((index) =>
+    index.name === "reference_1" &&
+    index.unique === true &&
+    Object.keys(index.key).length === 1 &&
+    index.key.reference === 1
+  );
+  if (obsoleteReferenceIndex?.name) {
+    try {
+      await OrderModel.collection.dropIndex(obsoleteReferenceIndex.name);
+      console.warn("Removed obsolete unique orders index on reference.");
+    } catch (error) {
+      if (
+        typeof error !== "object" ||
+        error === null ||
+        !("code" in error) ||
+        error.code !== 27
+      ) {
+        throw error;
+      }
+    }
+  }
+}
 await seedStore();
 const server = app.listen(port, () => console.info(`Roshona API listening on port ${port}`));
 server.on("error", (error: NodeJS.ErrnoException) => {

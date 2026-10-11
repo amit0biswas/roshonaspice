@@ -1,4 +1,5 @@
 import { defineConfig, loadEnv } from "vite";
+import { ServerResponse } from "node:http";
 import react from "@vitejs/plugin-react";
 
 export default defineConfig(({ mode }) => {
@@ -24,7 +25,22 @@ export default defineConfig(({ mode }) => {
     server: {
       host: "0.0.0.0",
       port: 5173,
-      proxy: { "/api": { target: "http://localhost:4000", changeOrigin: true } }
+      proxy: {
+        "/api": {
+          target: "http://localhost:4000",
+          changeOrigin: true,
+          configure: (proxy) => {
+            proxy.on("error", (_error, _request, response) => {
+              if (response instanceof ServerResponse && !response.headersSent) {
+                response.writeHead(503, { "Content-Type": "application/json" });
+                response.end(JSON.stringify({
+                  error: "The local API is not running. Start both services with npm run dev from the repository root."
+                }));
+              }
+            });
+          }
+        }
+      }
     },
     build: { sourcemap: false }
   };

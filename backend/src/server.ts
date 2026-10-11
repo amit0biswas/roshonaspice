@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import { createHash, randomBytes } from "node:crypto";
-import express, { type ErrorRequestHandler } from "express";
+import express, { type ErrorRequestHandler, type NextFunction, type Request, type Response } from "express";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import jwt from "jsonwebtoken";
@@ -623,7 +623,7 @@ app.delete("/api/admin/categories/:id", ...admin, async (req, res) => {
   res.json({ message: "Category removed." });
 });
 app.get("/api/admin/settings", ...admin, async (_req, res) => res.json({ settings: await SettingsModel.find().sort({ key: 1 }) }));
-app.put("/api/admin/settings/:key", ...admin, validate(z.object({ value: z.record(z.unknown()) })), async (req, res) => {
+app.put("/api/admin/settings/:key", ...admin, validate(z.object({ value: z.record(z.unknown()) })), async (req: Request, res: Response) => {
   if (req.params.key === "checkout") {
     const parsed = checkoutSettingsSchema.safeParse(req.body.value);
     if (!parsed.success) {
@@ -636,8 +636,8 @@ app.put("/api/admin/settings/:key", ...admin, validate(z.object({ value: z.recor
   res.json({ setting });
 });
 
-app.use((_req, res) => res.status(404).json({ error: "The requested API route was not found." }));
-const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
+app.use((_req: Request, res: Response) => res.status(404).json({ error: "The requested API route was not found." }));
+const errorHandler: ErrorRequestHandler = (error: unknown, _req: Request, res: Response, _next: NextFunction) => {
   if (error instanceof SyntaxError && "status" in error && error.status === 400) {
     res.status(400).json({ error: "The request body contains invalid JSON." });
     return;

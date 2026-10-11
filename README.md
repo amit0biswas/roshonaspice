@@ -105,7 +105,7 @@ There are no automated test files in the current repository. These production bu
 
 1. In Render, create a **Web Service** from the repository and use the repository root as its Root Directory so the npm workspace lockfile is available.
 2. Use the checked-in `render.yaml` Blueprint settings, or set:
-   - Build command: `npm ci --include=dev && npm run build -w backend`
+   - Build command: `npm ci --include=dev && npm ls -w backend @types/express @types/express-serve-static-core typescript && npm run build -w backend`
    - Start command: `npm run start -w backend`
    - Health check path: `/api/health`
 3. Add these service environment variables in Render. Never commit their values:

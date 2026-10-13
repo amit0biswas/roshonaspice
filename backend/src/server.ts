@@ -428,7 +428,7 @@ app.post("/api/orders", authenticate, validate(z.object({
   try {
     let created: unknown;
     await session.withTransaction(async () => {
-      const orderItems = [];
+      const orderItems: any[] = [];
       let subtotal = 0;
       for (const item of items) {
         const product = await ProductModel.findOneAndUpdate(
